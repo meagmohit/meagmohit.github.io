@@ -117,8 +117,9 @@
 
 
         // init map container, projection
-        var widthMap = 900,
-            heightMap = 500,
+        console.log(document.getElementById('left-pane').offsetWidth);
+        var widthMap = document.getElementById('left-pane').offsetWidth*1.0583,
+            heightMap = widthMap*(5/9),
             marginMap = {"top": 0, "left": -90, "right": 0, "bottom": 0};
         var svg_map = d3.select("#map").insert("svg")
             .attr("id", "map")
