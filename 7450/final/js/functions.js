@@ -49,7 +49,7 @@ function renderLegend(color, data) {
         .attr("height", "20")
         .attr("transform", "translate(" + (-1*marginMap.left) + ", " + marginMap.top + ")")
         .attr("y", function(d, i) {
-            return -100 + (svg_height - 29) - 25 * i;
+            return  legendmargin + 10 + 25 * i;
         })
         .attr("x", 30)
         .attr("fill", function(d, i) {
@@ -67,7 +67,7 @@ function renderLegend(color, data) {
     text.data(legend_items)
         .enter().append("text").merge(text)
         .attr("y", function(d, i) {
-            return -100 + (svg_height - 14) - 25 * i;
+            return legendmargin +25+ 25 * i;
         })
         .attr("x", 60)
         .attr("transform", "translate(" + (-1*marginMap.left) + ", " + marginMap.top + ")")
@@ -79,7 +79,7 @@ function renderLegend(color, data) {
         .text("Color Legend")
         .attr("x", 30)
         .attr("transform", "translate(" + (-1*marginMap.left) + ", " + marginMap.top + ")")
-        .attr("y", 255);
+        .attr("y", legendmargin);
 }
 
 function renderCircles(colorBub, data) {
