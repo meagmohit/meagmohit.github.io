@@ -1,7 +1,9 @@
 function fillMap(selection, color, data) {
 
     // TODO: minor fix, sometimes d gets a -99, why?
+    //console.log("selection",selection);
     selection
+ 
         .attr("fill", function(d) {
             return typeof data[d.id] === 'undefined' ? color_na :
                 d3.rgb(color(data[d.id]));
@@ -10,10 +12,29 @@ function fillMap(selection, color, data) {
 
 function setPathTitle(selection, data) {
     selection
+        .attr("title",function(d) {
+            return "" + d.id + ", " +
+                (typeof data[d.id] === 'undefined' ? 'N/A' : data[d.id]);
+        })
+    /*   .on("mouseover", function(d) {            // code for hover tooltip
+          console.log("Mouseover activated");
+          div.transition()
+          .duration(200)
+          .style("opacity", .9);
+          div.html(d.id + "<br/>")
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+        })
+       .on("mouseout", function(d) {
+          div.transition()
+          .duration(500)
+          .style("opacity", 0);
+        })   */
         .text(function(d) {
             return "" + d.id + ", " +
                 (typeof data[d.id] === 'undefined' ? 'N/A' : data[d.id]);
         });
+        
 }
 
 function updateMap(color, data) {
@@ -28,7 +49,9 @@ function updateMap(color, data) {
         .call(setPathTitle, data);
 
     // update headline
-    d3.select("h5").text(headline + init_year + '-' + init_year2);//d3.select("#year").node().value);
+    d3.selectAll("h5").text(headline + init_year + '-' + init_year2);//d3.select("#year").node().value);
+    console.log()
+    //d3.selectAll("#yeartext").text(headline + init_year + '-' + init_year2);
 }
 
 function renderLegend(color, data) {
@@ -127,45 +150,74 @@ function renderCircles(colorBub, data) {
         .merge(bubbles)
         .attr("cx", function(d) {
       var index = array.findIndex(function(pair) {
-        return pair.value == d.value
+        return pair.id == d.id
       });
       return (rscaleSum(rscale,index-1))*svgBubbleWidth/sumRscale;
         })
         .attr("cy", function(d) {
       var index = array.findIndex(function(pair) {
-        return pair.value == d.value
+        return pair.id == d.id
       });
             return (125-yscaleEllipse((rscaleSum(rscale,index-1))*svgBubbleWidth/sumRscale));
         })
         .attr("r", function(d) {
       var index = array.findIndex(function(pair) {
-        return pair.value == d.value
+        return pair.id == d.id
       });
             return rscale(index)*svgBubbleWidth/sumRscale;
         })
+        .attr("id", function(d) {
+            return 'oc-bubble-'+d.id.toString();
+        })
+        .on("mouseover", function(d) {            // code for hover tooltip
+          div.transition()
+          .duration(200)
+          .style("opacity", .9);
+          div.html(data_full['countryMapping']['1990'][d.id] + "<br/>" + "%GDP spent on health: "+Math.round(d.value * 1000) / 1000)
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+          div.transition()
+          .duration(500)
+          .style("opacity", 0);
+        })  
+        .on("click", function(arg1, i){
+                        //d3.select(".selected").classed("selected", false);
+                        onClickfunc(this,arg1,i);
+                        //renderBoxPlot(dataTemp);
+                    })
         .style("fill", function(d) {
             return colorBub(d.value);
         });
 }
 
 
-function renderBars(color, data) {
+/*function renderBars(color, data) {
 
     // turn data into array of objects
     array = [];
-    for (let key of Object.keys(data)) {
+ //   for (let key of Object.keys(data)) {
+      for (let mkk in defaults) {
+          let key = defaults[mkk];
+          if (data[key] == null){
+            console.log("yes baby -- undefined..");
+            continue;
+          }
+          console.log("datakey",data[key])
+          console.log(data[key]== null ? 0 : data[key])
           array.push({
               'id': key,
-              'value': data[key],
-              'sortvalue': data_full['KAHPYP']['2014'][key]
+              'value': data[key]== null ? 0 : data[key] //,
+              //'sortvalue': data_full['KAHPYP']['2014'][key]
           })
     }
     //console.log(array);
 
     // sort by country id
-    array = array.sort(function(a, b) {
-      return a.sortvalue - b.sortvalue;
-    });
+   // array = array.sort(function(a, b) {
+   //   return a.sortvalue - b.sortvalue;
+   // });
 
     xBars.domain(array.map(function(d, i) {
         return d.id;
@@ -226,8 +278,8 @@ function renderBars(color, data) {
             return y(d.value) - 5;
         });
         */
-
-}
+/*
+}*/
 
 function calcColorScale(data) {
 
@@ -246,8 +298,9 @@ function calcColorScale(data) {
     let scale = d3.scaleQuantile()
         .domain(quantiles_calc)
         //.range(d3.schemeOranges[(quantiles_calc.length) - 1]);
+        .range(colorcurr);
         //.range(["#FFF658", "#FFDD2C" , "#FFC500", "#E78200", "#D08300"]);  //Colour Scheme for HIV
-        .range(["#FF7E58", "#FF5D2C", "#FF3D00", "#CC1C00", "#9F0000"]); // Colour scheme for AIDS
+        //.range(["#FF7E58", "#FF5D2C", "#FF3D00", "#CC1C00", "#9F0000"]); // Colour scheme for AIDS
 
 
     console.log(scale);
@@ -332,7 +385,13 @@ function pairQuantiles(arr) {
 function renderArea(data) {
 
 
-    let colorArea = d3.scaleOrdinal(d3.schemeDark2).domain(defaults);;
+    let colorArea = d3.scaleOrdinal().domain(defaults).range(colorcurr.slice(0,defaults.length));
+    //console.log("dom:",defaults);
+    //function colorArea(country_index){
+    //  return colorcurr[country_index];
+    //}
+
+//    } 
     //console.log(colorArea(0));
     //.range(d3.schemeOranges[(quantiles_calc.length) - 1]);
     //let colorArea = d3.scaleQuantile().domain(defaults).range(["#FFF658", "#FFDD2C" , "#FFC500", "#E78200", "#D08300"]);
@@ -347,6 +406,7 @@ function renderArea(data) {
     temp = JSON.parse(JSON.stringify(abc));
     //var tempArray = JSON.parse(JSON.stringify(mainArray));
     for(let myX in myKeys){
+        //console.log("checkhere:",temp[myX]["IND"]);
         temp[myX]['date'] = parseTime(myKeys[myX]);
     };
     mydata = temp;
@@ -366,23 +426,59 @@ function renderArea(data) {
   stackArea.order(d3.stackOrderNone);
   stackArea.offset(d3.stackOffsetNone);
 
-  //console.log(stackArea(mydata));
+  //console.log("mydata:",stackArea(mydata));
 
   //d3.select("svg#area g.area").selectAll('g.axis').remove();
   svg_area.selectAll('g').remove();//.data(stackArea(mydata)).remove();
+
+
+
+  //d3.selectAll("#areatext").remove();
+  d3.selectAll("#areatext").text(fixtext+" over the years");
   var browser = svg_area.selectAll('.browser')
       .data(stackArea(mydata))
     .enter().append('g')
       .attr('class', function(d){ 
         //console.log(d.key);
         return 'browser ' + d.key; })
+      .on("mouseover", function(d) {            // code for hover tooltip
+          console.log("Mouseover activated");
+          div.transition()
+          .duration(200)
+          .style("opacity", .9);
+          console.log("cr: ",computeranges(data_full[selected_dataset]))
+          div.html(data_full['countryMapping']['1990'][d.key] + "<br/>" + fixtext+" for selected years: "+ Math.round(computeranges(data_full[selected_dataset])[d.key]*100)/100)
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+       })
+      .on("mouseout", function(d) {
+          div.transition()
+          .duration(500)
+          .style("opacity", 0);
+       })          
+     /*   selection
+        .text(function(d) {
+            return "" + d.id + ", " +
+                (typeof data[d.id] === 'undefined' ? 'N/A' : data[d.id]);
+        });*/
       .attr('fill-opacity', 0.5);
+  
+ /* browser.append("title")
+        //.call(setPathTitle, computeranges(data_deaths));
+        .attr("text", function(d){
+          return d.key;
+        })  ;
+        */
 
   //svg_area.selectAll('path').remove();
   browser.append('path')
       .attr('class', 'area')
       .attr('d', area)
-      .style('fill', function(d) { return colorArea(d.key); });
+      .style('stroke',"white")
+      .style('stroke-width',"1")
+      .style('fill', function(d) { //console.log("thisval:",d.index) ;
+        return colorArea(d.key); });
+
 
     // add the area
     /*
@@ -408,6 +504,93 @@ function renderArea(data) {
       .attr("transform", "translate(" + widthArea + ",0)")
       .call(yAreaAxis);
 
+      //Milestones
+  svg_area.append('rect')
+      .attr('class', 'milestones')
+      .attr('width', 5)
+      .attr('height', heightDP*3/4)
+      .attr('x', 55)
+      .attr('y',heightDP/4)
+      .attr('fill','#c0c0c0')
+      .on("mouseover", function(d) {            // code for hover tooltip
+          console.log("Mouseover activated");
+          div.transition()
+          .duration(200)
+          .style("opacity", .9);
+          div.html("Milestone <br> 1992: FDA licenses a rapid HIV diagnostic test kit which gives results from a blood test in 10 minutes")
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+       })
+      .on("mouseout", function(d) {
+          div.transition()
+          .duration(500)
+          .style("opacity", 0);
+       })         
+  svg_area.append('rect')
+      .attr('class', 'milestones')
+      .attr('width', 5)
+      .attr('height', heightDP*3/4)
+      .attr('x', 110)
+      .attr('y',heightDP/4)
+      .attr('fill','#c0c0c0')
+      .on("mouseover", function(d) {            // code for hover tooltip
+          console.log("Mouseover activated");
+          div.transition()
+          .duration(200)
+          .style("opacity", .9);
+          div.html("Milestone <br> 1994: The U.S. Public Health Service recommends that pregnant women be given the antiretroviral drug AZT to reduce the risk of perinatal transmission of HIV.")
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+       })
+      .on("mouseout", function(d) {
+          div.transition()
+          .duration(500)
+          .style("opacity", 0);
+       })         
+  svg_area.append('rect')
+      .attr('class', 'milestones')
+      .attr('width', 5)
+      .attr('height', heightDP*3/4)
+      .attr('x', 190)
+      .attr('y',heightDP/4)
+      .attr('fill','#c0c0c0')
+      .on("mouseover", function(d) {            // code for hover tooltip
+          console.log("Mouseover activated");
+          div.transition()
+          .duration(200)
+          .style("opacity", .9);
+          div.html("Milestone <br> 1997: Highly active antiretroviral therapy (HAART ) becomes the new standard of HIV care.")
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+       })
+      .on("mouseout", function(d) {
+          div.transition()
+          .duration(500)
+          .style("opacity", 0);
+       }) 
+  svg_area.append('rect')
+      .attr('class', 'milestones')
+      .attr('width', 5)
+      .attr('height', heightDP*3/4)
+      .attr('x', 275)
+      .attr('y',heightDP/4)
+      .attr('fill','#c0c0c0')
+      .on("mouseover", function(d) {            // code for hover tooltip
+          console.log("Mouseover activated");
+          div.transition()
+          .duration(200)
+          .style("opacity", .9);
+          div.html("Milestone <br> 2000: UNAIDS, WHO, and other global health groups announce a joint initiative with five major pharmaceutical manufacturers to negotiate reduced prices for HIV/AIDS drugs in developing countries.")
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+       })
+      .on("mouseout", function(d) {
+          div.transition()
+          .duration(500)
+          .style("opacity", 0);
+       }) 
+
+
   //svg_area.append("text")
   //  .attr("x", 0-margin.left)
   //  .text("Deaths")
@@ -417,16 +600,16 @@ function renderArea(data) {
   var legendSpacing = 8;
 
   var legend = svg_area.selectAll('.legend')
-  .data(colorArea.domain())
+  .data(defaults)
   .enter()
   .append('g')
   .attr('class', 'legendArea')
   .attr('transform', function(d, i) {
     var height = legendRectSize + legendSpacing;
-    var offset =  -50 + height * colorArea.domain().length / 2;
+    var offset =  -50 + height * defaults.length / 2;
     var horz = -2 * legendRectSize + 40;
     var vert = i * height - offset;
-    return 'translate(' + horz + ',' + vert + ')';
+    return 'translate(' + (horz-30) + ',' + vert + ')';
   });
 
   legend.append('rect')
@@ -438,47 +621,61 @@ function renderArea(data) {
   legend.append('text')
   .attr('x', legendRectSize + legendSpacing )
   .attr('y', legendRectSize - legendSpacing + 8)
+ // .attr('text-color', black)
+ // .attr('color', black)     //#c0c0c0
   .text(function(d) { return d; });
   
 
 }
 
 function renderBoxPlot(dataTemp) {
-        //creates a lookup table storing the index within the raw dataTemp array that corresponds to each country ID
-    var lookupByID = {};
-    for (var i = 0; i < dataTemp.length; i++) {
-        lookupByID[dataTemp[i].id] = i;
+  var lookupByID = {};
+  for (var i = 0; i < dataTemp.length; i++) {
+    lookupByID[dataTemp[i].id] = i;
+  }
+  
+  //creates a dataTempset containing the information for countries whose IDs are currently selected
+  dataTempset = [];
+  for (var i = 0; i < defaults.length; i++) {
+    dataTempset.push(dataTemp[lookupByID[defaults[i]]]);
+  }
+  var rows = dataTempset.length;
+  
+  console.log("Temp:",dataTemp);
+  
+  var rowHeight = heightBP/4;
+  
+  function getFontSize(text,space,max) {
+    max = max || -1;
+    len = text.length;
+    size = space/len * 2;
+    if (max !== -1 && size > max) {
+      size = max;
     }
-    
-    //creates a dataTempset containing the information for countries whose IDs are currently selected
-    dataTempset = [];
-    for (var i = 0; i < defaults.length; i++) {
-        dataTempset.push(dataTemp[lookupByID[defaults[i]]]);
+    return 10
+  }
+  //console.log("TempSet",dataTemp);
+  //create a scale for each column
+  var colKeys = [];
+  var sizeScales = [];
+  var colorScales = [];
+  for (var key in dataTempset[0])
+  {
+    if ((key !== "id") && (key !== "name")) {
+      colKeys.push(key);
+      var maxValue = d3.max(dataTempset, function(d){ return +d[key]; });
+      console.log("maxval",maxValue);
+      var sizeScale = d3.scaleSqrt()
+        .domain([0,maxValue])
+        .range([0,(rowHeight - rowPadding)-10]);
+      sizeScales.push(sizeScale);
+      var colorScale = d3.scaleLinear()
+        .domain([0,maxValue])
+        .range(['honeydew','darkgreen']);
+      colorScales.push(colorScale);
     }
-    var rows = dataTempset.length;
-
-    var rowHeight = heightBP/rows;
-    
-    //create a scale for each column
-    var colKeys = [];
-    var sizeScales = [];
-    var colorScales = [];
-    for (var key in dataTempset[0])
-    {
-        if (key !== "id") {
-            colKeys.push(key);
-            var maxValue = d3.max(dataTempset, function(d){ return d[key]; });
-            var sizeScale = d3.scaleSqrt()
-                .domain([0,maxValue])
-                .range([0,(rowHeight - rowPadding)/2]);
-            sizeScales.push(sizeScale);
-            var colorScale = d3.scaleLinear()
-                .domain([0,maxValue])
-                .range(['honeydew','darkgreen']);
-            colorScales.push(colorScale);
-        }
-    }
-    //console.log(colKeys);
+  }
+  //console.log("colkeys",colKeys);
 
     var columnWidth = widthBP/colKeys.length;
     
@@ -486,7 +683,6 @@ function renderBoxPlot(dataTemp) {
     var chart = svg.append("g")
       .attr("transform", "translate(" + marginBP.left + "," + marginBP.top + ")");
     
-
     var columnHeader = chart.append("g")
       .attr("transform", "translate(0,0)");
     
@@ -497,49 +693,78 @@ function renderBoxPlot(dataTemp) {
       .attr("transform", function(d, i) {return "translate(" + (columnWidth * i) +",0)"; });
     
     columnLabels.append("text")
-    .text(function(d) { return d })
-    .attr("y", -10)
-    .attr("x", columnWidth/2)
-    .style("text-anchor","middle");
-    //.attr("transform", "translate(20)rotate(-45)")
-    
+    .text(function(d) { console.log("myyy:", d.indexOf("-")); return d.substr(0,d.indexOf("-")) })
+  .attr("font-size", function(d) { return String(getFontSize(d,marginBP.top*1.5,24))+"px" })
+    .attr("y",-20)
+  .attr("x", columnWidth/2-55)
+  .style("text-anchor","left")
+    .attr("transform", "translate(20)");
 
-    dataTempset.forEach(function(d) {
+      columnLabels.append("text")
+    .text(function(d) { console.log("myyy:", d.indexOf("-")); return d.substr(1+d.indexOf("-"),d.length) })
+  .attr("font-size", function(d) { return String(getFontSize(d,marginBP.top*1.5,24))+"px" })
+    .attr("y",-5)
+  .attr("x", columnWidth/2-55)
+  .style("text-anchor","left")
+    .attr("transform", "translate(20)");
+  
+  /*var tooltip = d3.select("body")
+    .append("div")
+    .style("position", "absolute")
+    .style("z-index", "10")
+    .style("visibility", "hidden")
+  .style("opacity","0.8")
+    .style("background", "white")
+  .style("color","black");*/
     
-      //console.log(d,d.values);
-      
+    dataTempset.forEach(function(d) {
+  
+    //console.log(d3.values(d).slice(2));
+      //console.log("ryan: ",d);
       var rowNumber = defaults.indexOf(d.id);
+
 
       var rowG = chart.append("g")
       .attr("transform", "translate(0," + (rowNumber * rowHeight) + ")");
       
       rowG.append("text")
-      .text(d.id)
+      .text(d.name)
+    .attr("font-size", String(getFontSize(d.name,marginBP.left-20,24)) +"px")
       .attr("x", -rowPadding)
-      .attr("y", rowHeight/2 + 6)
+      .attr("y", rowHeight/2 + getFontSize(d.name,marginBP.left-20,24)/3)
       .style("text-anchor", "end");
 
-      var boxes =  rowG.selectAll("g")
-      .data(d3.values(d).slice(0,-1))
-      .enter()
-      .append("g")
-      .attr("class", "box")
-      .attr("transform", function(d, i) {return "translate(" + (columnWidth * i) +",0)"; });
-      
-      boxes.append("rect")
-      .attr("x", function(d,i) { return (columnWidth - sizeScales[i](d))/2; })
-      .attr("y", function(d,i) { return (rowHeight - sizeScales[i](d))/2; })
-      .attr("width", function(d,i) { return sizeScales[i](d); })
-      .attr("height", function(d,i) { return sizeScales[i](d); })
-      .style("fill", function(d,i){ return colorScales[i](d); });
-      
-      boxes.append("text")
-      .text(function(d,i){ return d; })
-      .attr("x", columnWidth/2)
-      .attr("y", rowHeight/2 + 6)
-      .style("text-anchor", "middle");
-      //.attr("font-size",2pt);
-      
+    var boxes =  rowG.selectAll("g")
+    .data(d3.values(d).slice(2))
+    .enter()
+    .append("g")
+    .attr("class", "box")
+    .attr("transform", function(d, i) {return "translate(" + (columnWidth * i) +",0)"; });
+    
+    //boxes.selectAll('rect').remove();
+    boxes.append("rect")
+    .attr("x", function(d,i) { return (columnWidth - sizeScales[i](d))/2; })
+    .attr("y", function(d,i) { return (rowHeight - sizeScales[i](d))/2; })
+    .attr("width", function(d,i) { return sizeScales[i](d); })
+    .attr("height", function(d,i) { return sizeScales[i](d); })
+    .on("mouseover", function(d) {            // code for hover tooltip
+      div.transition()
+      .duration(200)
+      .style("opacity", .9);
+      div.html(d)
+      .style("left", (d3.event.pageX) + "px")
+      .style("top", (d3.event.pageY - 28) + "px");
+    })
+    .on("mouseout", function(d) {
+      div.transition()
+      .duration(500)
+      .style("opacity", 0);
+    }) 
+    .style("fill", function(d,i){ return colorScales[i](d); });
+    /*.on("mouseover", function(d){tooltip.text(d); return tooltip.style("visibility", "visible");})
+      .on("mousemove", function(){return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px");})
+      .on("mouseout", function(){return tooltip.style("visibility", "hidden");});*/
+    
     });
  
 }
@@ -601,19 +826,178 @@ function calcColorScaleBubbles(data_GDP){
     if (max > overMax){overMax = max;}
     tot = tot + Object.values(data_GDP[year]).length
   }
-  // console.log(overMin)
-  // console.log(overMax)
+   console.log("T1",overMin)
+   console.log("T2",overMax)
 
   let color = d3.scaleLinear().domain([overMin,overMax])
-       .range([d3.rgb("#007AFF"), d3.rgb('#FFF500')]);
-  let  colorScale = d3.scaleSequential(d3.interpolateInferno).domain([9365166,78870119013703]);  
-  let colorS = d3.scaleLog().base(100000).domain([overMin,overMax])
-    .interpolate(d3.interpolateHslLong)
-       .range([d3.rgb("#ff0000"), d3.rgb("#00ffe5")]);
+       .range(colorcurr);
+	   
+  let colorS =d3.scaleLog().base(1)
+				.domain([overMin+1,overMax+1])
+				.range([d3.rgb(colorcurr[0]), d3.rgb(colorcurr[4])])
+				.interpolate(d3.interpolateHcl);
+  //let  colorScale = d3.scaleSequential(d3.interpolateInferno).domain([9365166,78870119013703]).range(colorcurr);  
+//  let colorS = d3.scaleLog().base(2).domain([overMin,overMax])
+    //.interpolate(d3.interpolateHslLong)
+ //      .range(colorcurr);
 //  console.log(colorScale(1911600970))
     
   return colorS;
 //  let scale = d3.scalePow().exponent(6)
 //          .domain([overMin,overMax])
 //          .range(d3.schemeBuPu[tot]);
+}
+
+function onClickfunc(myobj, arg1, i){
+                          //console.log(defaults.some(function(entry) { return entry == arg1.id; }));
+
+                          console.log("defaults:",defaults);
+  if(noselect.some(x => x == arg1.id)){
+    return;
+  }
+  console.log("defaults:",defaults);
+
+  if(defaults.some(function(entry) { return entry == arg1.id; })) {
+    let myindex = defaults.indexOf(arg1.id);
+    console.log(myindex);
+    if (myindex !== -1) {
+      defaults.splice(myindex, 1);
+      d3.select("#"+arg1.id).classed("selected", false);
+      d3.select("#oc-bubble-"+arg1.id).classed("selected", false);
+    }
+    if(defaults.length==0){
+      defaults.push("Total");
+      flag_countryselect = false;
+    }
+  }
+  else{
+    if (!flag_countryselect){
+      defaults[0] = arg1.id;
+      d3.select("#"+arg1.id).classed("selected", true);
+      d3.select("#oc-bubble-"+arg1.id).classed("selected", true);
+      flag_countryselect = true;
+    }
+    else{
+      if(defaults.length<5){
+        defaults.push(arg1.id);
+        d3.select("#"+arg1.id).classed("selected", true);
+        d3.select("#oc-bubble-"+arg1.id).classed("selected", true);
+      }
+    };        
+  };
+  renderArea(data_full[selected_dataset]);
+  renderBoxPlot(dataRyan);
+  //renderBars(calcColorScale(computeranges(data_full['DHSFS']['2013'])), data_full['DHSFS']['2013']);
+  if (selected_dataset=="LWHT"){
+    renderDP(computeranges(data_full['LWHM']), computeranges(data_full['LWHW']), computeranges(data_full['LWHC']));
+  };
+  if (selected_dataset=="Deaths"){
+    renderDP(computeranges(data_full['DeathsMale']), computeranges(data_full['DeathsFemale']), computeranges(data_full['DeathsChildren']));
+  };
+}
+
+function renderDP(dataM, dataF, dataC){
+  let totalM=0, totalF=0, totalC=0;
+  for (var i = 0; i < defaults.length; i++) {
+        if (dataM[defaults[i]] >=0 && dataF[defaults[i]] >=0 && dataC[defaults[i]] >=0){ 
+          totalM = totalM + dataM[defaults[i]];
+          totalF = totalF + dataF[defaults[i]];
+          totalC = totalC + dataC[defaults[i]];
+        }
+    };
+  console.log("dataM: ",dataM);
+
+  hratio = (totalM+totalF)/(totalM+totalF+totalC);
+  wratio = totalM/(totalM+totalF);
+
+  console.log("hratio: ",hratio);
+  
+  if (isNaN(hratio) || isNaN(wratio)){
+    return;
+  }
+  //hratio = 0.6;
+  //wratio=0.8;
+  
+  svg_DP.selectAll('rect').remove();
+  svg_DP.selectAll('text').remove();
+  svg_DP.append('rect') //men
+  .attr('width', (widthDP-10)*(wratio))
+  .attr('height', (heightDP-10)*(hratio))
+  .attr('x',0)
+  .attr('fill',colorcurr[0])
+  .on("mouseover", function(d) {            // code for hover tooltip
+    div.transition()
+    .duration(200)
+    .style("opacity", .9);
+    div.html(totalM)
+    .style("left", (d3.event.pageX) + "px")
+    .style("top", (d3.event.pageY - 28) + "px");
+  })
+  .on("mouseout", function(d) {
+    div.transition()
+    .duration(500)
+    .style("opacity", 0);
+  }) 
+  .attr('y',0);
+
+  svg_DP.append('text')
+  .text("Men")
+  .attr("x", (widthDP)*(wratio/2))
+  .attr("y", (heightDP)*(hratio/2))
+  .style("text-anchor", "middle");
+
+  svg_DP.append('rect') // women
+  .attr('width', (widthDP-10)*(1-wratio))
+  .attr('height', (heightDP-10)*(hratio))
+  .attr('x',widthDP*(wratio))
+  .attr('fill',colorcurr[0])
+  .on("mouseover", function(d) {            // code for hover tooltip
+    div.transition()
+    .duration(200)
+    .style("opacity", .9);
+    div.html(totalF)
+    .style("left", (d3.event.pageX) + "px")
+    .style("top", (d3.event.pageY - 28) + "px");
+  })
+  .on("mouseout", function(d) {
+    div.transition()
+    .duration(500)
+    .style("opacity", 0);
+  }) 
+  .attr('y',0);
+
+  svg_DP.append('text')
+  .text("Women")
+  .attr("x", (widthDP)*(wratio) + (widthDP-10)*(1-wratio)/2)
+  .attr("y", (heightDP)*(hratio/2))
+  .style("text-anchor", "middle");
+
+  svg_DP.append('rect') // children
+  .attr('width', (widthDP))
+  .attr('height', (heightDP-10)*(1-hratio))
+  .attr('x',0)
+  .attr('fill',colorcurr[0])
+  .on("mouseover", function(d) {            // code for hover tooltip
+    div.transition()
+    .duration(200)
+    .style("opacity", .9);
+    div.html(totalC)
+    .style("left", (d3.event.pageX) + "px")
+    .style("top", (d3.event.pageY - 28) + "px");
+  })
+  .on("mouseout", function(d) {
+    div.transition()
+    .duration(500)
+    .style("opacity", 0);
+  }) 
+  .attr('y',heightDP*hratio);
+
+  svg_DP.append('text')
+  .text("children")
+  .attr("x", widthDP*(1/2))
+  .attr("y", 5 +(heightDP)*(hratio) + (heightDP)*(1-hratio)/2)
+  .style("text-anchor", "middle");
+
+
+
 }
