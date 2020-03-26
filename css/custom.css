@@ -16,7 +16,7 @@ img {
 }
 
 .border-vertical-line {
-	border-left:6px #000088 solid; 
+	border-left:6px #000088 solid;
 	border-radius: 4px;
 }
 
@@ -150,7 +150,7 @@ img {
  }
 
  .conf-name {
- 	color: #ff5666;
+ 	color: #980000;
  	font-weight: bold;
  }
 
@@ -174,7 +174,7 @@ html {
 /* -- -For Home Page-*/
 
 .home-bg {
-  padding: 0px 0px; 
+  padding: 0px 0px;
   position: relative;
   height: 100vh;
 }
@@ -239,7 +239,7 @@ html {
   font-weight: 700;
   position: relative;
   z-index: 3;
-  letter-spacing: 6px;  
+  letter-spacing: 6px;
   line-height: normal;
   margin-bottom: 20px;
 }
@@ -249,7 +249,7 @@ html {
     font-weight: 400;
     color: #00cc66;
     text-transform: none;
-    letter-spacing: 2px;  
+    letter-spacing: 2px;
     font-family: 'robotobold';
     margin-bottom: 20px;
 }
@@ -339,10 +339,10 @@ html {
 @media screen and (min-width: 0px) and (max-width: 720px) and (orientation: portrait){
   .mobile-small{
     width: 140px;
-    height: 175px; 
+    height: 175px;
   }
-  .mobile-hide{ 
-    display: none; 
+  .mobile-hide{
+    display: none;
   }
   .mobile-index{
     padding: 175px 50px;
@@ -403,10 +403,10 @@ html {
 @media screen and (min-width: 0px) and (max-width: 1000px) and (orientation: landscape){
   .mobile-small{
     width: 112px;
-    height: 140px; 
+    height: 140px;
   }
-  .mobile-hide{ 
-    display: none; 
+  .mobile-hide{
+    display: none;
   }
   .mobile-index{
     padding: 125px 50px;
@@ -538,7 +538,7 @@ html {
 
   border:2px solid black;
   border-radius: 50px;
-  background-color: transparent; 
+  background-color: transparent;
 }
   .portfolio-modal .close-modal:hover {
     opacity: 0.3; }
@@ -570,7 +570,7 @@ html {
   opacity: 0; }
 
 .img-centered {
-  margin: 0 auto; 
+  margin: 0 auto;
   padding-right: 20px;
   padding-top: 20px;
 }
@@ -578,6 +578,3 @@ html {
 .img-fluid {
   padding: 5px;
 }
-
-
-
